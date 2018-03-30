@@ -1,5 +1,7 @@
 const redis = require('../utils/Redis');
 const web3 = require('../utils/Web3');
+const Token = require('../models/Token');
+const Promise = require('bluebird');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 
 exports.create = async () => {
@@ -11,13 +13,15 @@ exports.create = async () => {
   return account;
 };
 
-exports.get = async (address) => {
+async function getAccountByAddress(address) {
   const privateKey = await redis.hgetAsync(USER_WALLET_HASH, address);
   if (privateKey.length != 66) {
     return null;
   }
-  return web3.eth.accounts.privateKeyToAccount(privateKey);
+return web3.eth.accounts.privateKeyToAccount(privateKey);
 };
+
+exports.get = getAccountByAddress;
 
 /**
  * 
@@ -28,3 +32,56 @@ exports.getBalance = async (address) => {
     const balanceInWei = await web3.eth.getBalance(address);
     return web3.utils.fromWei(balanceInWei, "ether");
 };
+
+exports.transfer = async (from, to, token, gasPrice = 0) => {
+  let result;
+  if (token.getType() === Token.ETH) {
+    result = await transferEth(from, to, token.getAmount(), gasPrice);
+  } else {
+    result = await transferEthToken(from, to, token, gasPrice);
+  }
+  const {error, hash} = result;
+  if (error) {
+    return { error: error, hash: null };
+  }
+  return new Promise((resolve, reject) => {
+    hash
+    .on('transactionHash', hash => {
+      resolve({ error: null, hash: hash }); 
+    })
+    .on('error', error => {
+      resolve({ error: error, hash: null });
+    });
+  });
+};
+
+async function transferEth(from, to, value, gasPrice) {
+  let sender;
+  try {
+    sender = await getAccountByAddress(from);
+  } catch (e) {
+    return {
+      error: `Can't deduce account from ${from}`,
+      hash: null,
+    }
+  }
+
+  const tx = {
+    to: to,
+    value: web3.utils.toWei(value, "ether"),
+    gas: 42000,
+  };
+  if (gasPrice > 0) {
+    tx.gasPrice =  gasPrice;
+  }
+  const signedTx = await sender.signTransaction(tx);
+  return {
+    error: null,
+    hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+  };
+}
+
+async function transferEthToken(from, to, token, gasPrice)
+{
+
+}
