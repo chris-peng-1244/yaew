@@ -34,10 +34,16 @@ router.post('/', async (req, res, next) => {
 });
 
 router.post('/transfer', async (req, res, next) => {
+  try {
+    var token = await Token.create(req.body.tokenType, req.body.amount);
+  } catch (e) {
+    return next(boom.badRequest(e.message));
+  }
+
   const from = req.body.from;
   const to = req.body.to;
-  const token = Token.create(req.body.tokenType, req.body.amount);
   const gasPrice = GasPrice.getGasPrice(req.body.gasPrice);
+
   const { error, hash } = await UserWallet.transfer(from, to, token, gasPrice);
   if (error === UserWallet.INSUFFICIENT_TOKEN) {
     return next(boom.badRequest("User wallet doesn't have enough token to transfer"));

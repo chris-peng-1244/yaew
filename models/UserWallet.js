@@ -36,7 +36,7 @@ exports.getBalance = async (address) => {
 exports.transfer = async (from, to, token, gasPrice = 0) => {
   let result;
   if (token.getType() === Token.ETH) {
-    result = await transferEth(from, to, token.getAmount(), gasPrice);
+    result = await transferEth(from, to, token, gasPrice);
   } else {
     result = await transferEthToken(from, to, token, gasPrice);
   }
@@ -55,7 +55,7 @@ exports.transfer = async (from, to, token, gasPrice = 0) => {
   });
 };
 
-async function transferEth(from, to, value, gasPrice) {
+async function transferEth(from, to, token, gasPrice) {
   let sender;
   try {
     sender = await getAccountByAddress(from);
@@ -68,7 +68,7 @@ async function transferEth(from, to, value, gasPrice) {
 
   const tx = {
     to: to,
-    value: web3.utils.toWei(value, "ether"),
+    value: token.getAmount(),
     gas: 42000,
   };
   if (gasPrice > 0) {
@@ -83,5 +83,34 @@ async function transferEth(from, to, value, gasPrice) {
 
 async function transferEthToken(from, to, token, gasPrice)
 {
+  let sender;
+  try {
+    sender = await getAccountByAddress(from);
+  } catch (e) {
+    return {
+      error: `Can't deduce account from ${from}`,
+      hash: null,
+    }
+  }
 
+  const tx = {
+    to: token.getAddress(),
+    value: 0,
+    data: getTokenTransactionData(to, token.getAmount()),
+    gas: 54000,
+  };
+  if (gasPrice > 0) {
+    tx.gasPrice =  gasPrice;
+  }
+  const signedTx = await sender.signTransaction(tx);
+  return {
+    error: null,
+    hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)
+  };
+}
+
+function getTokenTransactionData(to, amount)
+{
+  return '0xa9059cbb' + to.substr(2).padStart(64, '0')
+    + parseInt(amount).toString(16).padStart(64, '0');
 }
