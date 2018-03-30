@@ -97,7 +97,7 @@ async function transferEthToken(from, to, token, gasPrice)
     to: token.getAddress(),
     value: 0,
     data: getTokenTransactionData(to, token.getAmount()),
-    gas: 54000,
+    gas: 100000,
   };
   if (gasPrice > 0) {
     tx.gasPrice =  gasPrice;
