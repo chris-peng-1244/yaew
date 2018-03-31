@@ -28,6 +28,14 @@ exports.create = (type, amount) => {
   return Token(type, amount);
 };
 
+exports.addNewToken = async (type, address, decimal) => {
+  if (await redis.hexistsAsync(TOKEN_META, type)) {
+    return false;
+  }
+  await redis.hsetAsync(TOKEN_META, type, address+':'+decimal);
+  return true;
+};
+
 async function getMeta(type) {
   if (type === ETH) {
     return { address: '0x0', decimal: 18 };

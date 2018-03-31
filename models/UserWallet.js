@@ -2,6 +2,7 @@ const redis = require('../utils/Redis');
 const web3 = require('../utils/Web3');
 const Token = require('../models/Token');
 const Promise = require('bluebird');
+const Transaction = require('../models/Transaction');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 
 exports.create = async () => {
@@ -34,13 +35,7 @@ exports.getBalance = async (address) => {
 };
 
 exports.transfer = async (from, to, token, gasPrice = 0) => {
-  let result;
-  if (token.getType() === Token.ETH) {
-    result = await transferEth(from, to, token, gasPrice);
-  } else {
-    result = await transferEthToken(from, to, token, gasPrice);
-  }
-  const {error, hash} = result;
+  const {error, hash} = await transfer(from, to, token, gasPrice);
   if (error) {
     return { error: error, hash: null };
   }
@@ -55,7 +50,7 @@ exports.transfer = async (from, to, token, gasPrice = 0) => {
   });
 };
 
-async function transferEth(from, to, token, gasPrice) {
+async function transfer(from, to, token, gasPrice) {
   let sender;
   try {
     sender = await getAccountByAddress(from);
@@ -66,51 +61,10 @@ async function transferEth(from, to, token, gasPrice) {
     }
   }
 
-  const tx = {
-    to: to,
-    value: token.getAmount(),
-    gas: 42000,
-  };
-  if (gasPrice > 0) {
-    tx.gasPrice =  gasPrice;
-  }
-  const signedTx = await sender.signTransaction(tx);
+  const tx = Transaction.createTransaction(from, to, token, gasPrice);
+  const signedTx = await sender.signTransaction(tx.getTxObj());
   return {
     error: null,
     hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)
   };
-}
-
-async function transferEthToken(from, to, token, gasPrice)
-{
-  let sender;
-  try {
-    sender = await getAccountByAddress(from);
-  } catch (e) {
-    return {
-      error: `Can't deduce account from ${from}`,
-      hash: null,
-    }
-  }
-
-  const tx = {
-    to: token.getAddress(),
-    value: 0,
-    data: getTokenTransactionData(to, token.getAmount()),
-    gas: 100000,
-  };
-  if (gasPrice > 0) {
-    tx.gasPrice =  gasPrice;
-  }
-  const signedTx = await sender.signTransaction(tx);
-  return {
-    error: null,
-    hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)
-  };
-}
-
-function getTokenTransactionData(to, amount)
-{
-  return '0xa9059cbb' + to.substr(2).padStart(64, '0')
-    + parseInt(amount).toString(16).padStart(64, '0');
 }
