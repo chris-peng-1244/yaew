@@ -9,9 +9,9 @@ var winston = require('winston');
 var bearerToken = require('express-bearer-token');
 require('dotenv').config();
 
-var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var walletRouter = require('./routes/wallet');
+var transactionRouter = require('./routes/transaction');
 var auth = require('./middlewares/auth');
 
 winston.add(winston.transports.File, {
@@ -39,10 +39,10 @@ app.use(bodyParser.json()); // application/json
 app.use(bodyParser.urlencoded({ extended: true })); // application/x-www-form-urlencoded
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
 app.use(auth);
 app.use('/users', usersRouter);
 app.use('/wallets', walletRouter);
+app.use('/transactions', transactionRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

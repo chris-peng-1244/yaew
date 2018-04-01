@@ -1,5 +1,6 @@
 const redis = require('../utils/Redis');
 const TOKEN_META = process.env.APP_NAME+'_token_metas';
+const TOKEN_ADDRESS_TO_TYPE = process.env.APP_NAME+'_token_address_to_type';
 const ETH = 1;
 
 const Token = async (type, amount) => {
@@ -27,8 +28,19 @@ const Token = async (type, amount) => {
   });
 };
 
-exports.create = (type, amount = 0) => {
-  return Token(type, amount);
+exports.create = createToken;
+
+async function createToken(type, amount = 0) {
+  return await Token(type, amount);
+}
+
+exports.createFromAddress = async (address) => {
+  address = address.toLowerCase();
+  const type = await redis.hgetAsync(TOKEN_ADDRESS_TO_TYPE, address);
+  if (null == type) {
+    throw new Error(`Token at address ${address} is not supported`);
+  }
+  return await createToken(type);
 };
 
 exports.addNewToken = async (type, address, decimal) => {
@@ -36,6 +48,7 @@ exports.addNewToken = async (type, address, decimal) => {
     return false;
   }
   await redis.hsetAsync(TOKEN_META, type, address+':'+decimal);
+  await redis.hsetAsync(TOKEN_ADDRESS_TO_TYPE, address, type);
   return true;
 };
 
