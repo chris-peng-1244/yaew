@@ -3,6 +3,7 @@ const web3 = require('../utils/Web3');
 const Token = require('../models/Token');
 const Promise = require('bluebird');
 const Transaction = require('../models/Transaction');
+const ERC20Contract = require('../models/ERC20Contract');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 
 exports.create = async () => {
@@ -29,9 +30,18 @@ exports.get = getAccountByAddress;
  * @param string address 
  * @throws When the address is invalid or the network is lost.
  */
-exports.getBalance = async (address) => {
+exports.getBalance = async (address, token) => {
+  if (token.getType() === Token.ETH) {
     const balanceInWei = await web3.eth.getBalance(address);
     return web3.utils.fromWei(balanceInWei, "ether");
+  }
+  return getTokenBalance(address, token);
+};
+
+async function getTokenBalance(address, token) {
+  const contract = await ERC20Contract.at(token.getAddress());
+  const result = await contract.methods.balanceOf(address).call();
+  return parseInt(result)/Math.pow(10, token.getDecimal())+'';
 };
 
 exports.transfer = async (from, to, token, gasPrice = 0) => {

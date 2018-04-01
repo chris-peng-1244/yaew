@@ -20,11 +20,14 @@ const Token = async (type, amount) => {
     },
     getAddress: () => {
       return address;
+    },
+    getDecimal: () => {
+      return decimal;
     }
   });
 };
 
-exports.create = (type, amount) => {
+exports.create = (type, amount = 0) => {
   return Token(type, amount);
 };
 

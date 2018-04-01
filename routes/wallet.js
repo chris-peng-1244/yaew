@@ -6,9 +6,11 @@ const GasPrice = require('../utils/GasPrice');
 const UserWallet = require('../models/UserWallet');
 const Token = require('../models/Token');
 
-router.get('/:address', async (req, res, next) => {
+router.get('/:address/:tokenType', async (req, res, next) => {
   try {
-    const balance = await UserWallet.getBalance(req.params.address);
+    const tokenType = req.params.tokenType || 1;
+    const token = await Token.create(tokenType, 0);
+    const balance = await UserWallet.getBalance(req.params.address, token);
     return res.json({
       code: 0,
       data: balance,
