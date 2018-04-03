@@ -11,3 +11,9 @@ exports.getGasPrice = (price) => {
   }
   return web3.utils.toWei(price+'', "gwei");
 };
+
+exports.getEthTransactionGasUsed = (gasLimit, gasPrice) => {
+  const gasUsedInGwei = gasLimit * gasPrice;
+  const gasUsed = web3.utils.toWei(gasUsedInGwei.toString(), "gwei");
+  return web3.utils.fromWei(gasUsed, "ether");
+};

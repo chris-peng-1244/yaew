@@ -5,12 +5,14 @@ const Promise = require('bluebird');
 const Transaction = require('../models/Transaction');
 const ERC20Contract = require('../models/ERC20Contract');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
+const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME + '_user_wallet_address_list';
 
 exports.create = async () => {
   const account = web3.eth.accounts.create(web3.utils.randomHex(32));
   const exists = await redis.hexistsAsync(USER_WALLET_HASH, account.address);
   if (!exists) {
     await redis.hsetAsync(USER_WALLET_HASH, account.address, account.privateKey);
+    await redis.rpushAsync(USER_WALLET_ADDRESS_LIST, account.address);
   }
   return account;
 };
@@ -24,6 +26,17 @@ return web3.eth.accounts.privateKeyToAccount(privateKey);
 };
 
 exports.get = getAccountByAddress;
+
+exports.findAll = async (page, pageSize = 1000) => {
+  if (page < 1) {
+    return [];
+  }
+  return await redis.lrangeAsync(USER_WALLET_ADDRESS_LIST, (page-1)*pageSize, (page)*pageSize);
+};
+
+exports.count = async () => {
+  return await redis.llenAsync(USER_WALLET_ADDRESS_LIST);
+};
 
 /**
  * 

@@ -2,6 +2,7 @@ const redis = require('../utils/Redis');
 const TOKEN_META = process.env.APP_NAME+'_token_metas';
 const TOKEN_ADDRESS_TO_TYPE = process.env.APP_NAME+'_token_address_to_type';
 const ETH = 1;
+const MYTOKEN = 2;
 
 const Token = async (type, amount) => {
   const t = parseInt(type);
@@ -65,3 +66,4 @@ async function getMeta(type) {
 };
 
 exports.ETH = ETH;
+exports.MYTOKEN = MYTOKEN;
