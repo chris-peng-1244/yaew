@@ -57,8 +57,8 @@ async function getTokenBalance(address, token) {
   return parseInt(result)/Math.pow(10, token.getDecimal())+'';
 };
 
-exports.transfer = async (from, to, token, gasPrice = 0) => {
-  const {error, hash} = await transfer(from, to, token, gasPrice);
+exports.transfer = async (from, to, token, gasPrice = 0, nonce = 0) => {
+  const {error, hash} = await transfer(from, to, token, gasPrice, nonce);
   if (error) {
     return { error: error, hash: null };
   }
@@ -73,7 +73,7 @@ exports.transfer = async (from, to, token, gasPrice = 0) => {
   });
 };
 
-async function transfer(from, to, token, gasPrice) {
+async function transfer(from, to, token, gasPrice, nonce) {
   let sender;
   try {
     sender = await getAccountByAddress(from);
@@ -84,7 +84,7 @@ async function transfer(from, to, token, gasPrice) {
     }
   }
 
-  const tx = Transaction.createTransaction(from, to, token, gasPrice);
+  const tx = Transaction.createTransaction(from, to, token, gasPrice, nonce);
   const signedTx = await sender.signTransaction(tx.getTxObj());
   return {
     error: null,
