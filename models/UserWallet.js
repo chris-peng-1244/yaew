@@ -57,8 +57,8 @@ async function getTokenBalance(address, token) {
   return parseInt(result)/Math.pow(10, token.getDecimal())+'';
 };
 
-exports.transfer = async (from, to, token, gasPrice = 0, nonce = 0) => {
-  const {error, hash} = await transfer(from, to, token, gasPrice, nonce);
+exports.transfer = async (from, to, token, gasPrice = 0) => {
+  const {error, hash} = await transfer(from, to, token, gasPrice);
   if (error) {
     return { error: error, hash: null };
   }
@@ -73,7 +73,7 @@ exports.transfer = async (from, to, token, gasPrice = 0, nonce = 0) => {
   });
 };
 
-async function transfer(from, to, token, gasPrice, nonce) {
+async function transfer(from, to, token, gasPrice) {
   let sender;
   try {
     sender = await getAccountByAddress(from);
@@ -84,8 +84,17 @@ async function transfer(from, to, token, gasPrice, nonce) {
     }
   }
 
-  const tx = Transaction.createTransaction(from, to, token, gasPrice, nonce);
-  const signedTx = await sender.signTransaction(tx.getTxObj());
+  try {
+    const tx = Transaction.createTransaction(from, to, token, gasPrice);
+    var txObj = await tx.getTxObj();
+  } catch (e) {
+    return {
+      error: e.message,
+      hash: null,
+    };
+  }
+
+  const signedTx = await sender.signTransaction(txObj);
   return {
     error: null,
     hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)

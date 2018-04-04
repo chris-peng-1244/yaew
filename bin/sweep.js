@@ -13,7 +13,6 @@ userWallet.count()
     return;
   } 
 
-  NONCE = await web3.eth.getTransactionCount(process.env.ETH_COINBASE);
   const token = await Token.create(Token.MYTOKEN);
   const pageSize = 1000;
   const page = Math.ceil(count / pageSize);
@@ -26,11 +25,10 @@ userWallet.count()
 async function fundWallets(page, pageSize, token)
 {
   const wallets = await userWallet.findAll(page, pageSize);
-  const filteredWallets = await Bluebird.filter(wallets, async wallet => {
+  await Bluebird.filter(wallets, async wallet => {
     return await userWallet.getBalance(wallet, token) > 0;
-  });
-  await Bluebird.mapSeries(filteredWallets, wallet => {
-    return fundWallet(wallet);
+  }).each(async wallet => {
+    return await fundWallet(wallet);
   });
 }
 
@@ -40,7 +38,7 @@ async function fundWallet(wallet) {
     gasPrice.getEthTransactionGasUsed(60000, process.env.SWEEP_GAS_PRICE)
   );
   const hash = await userWallet.transfer(process.env.ETH_COINBASE, wallet, token, 
-    gasPrice.getGasPrice(process.env.SWEEP_GAS_PRICE), NONCE++);
+    gasPrice.getGasPrice(process.env.SWEEP_GAS_PRICE));
   console.log(hash);
   return hash;
 }
