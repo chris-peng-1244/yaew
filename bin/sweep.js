@@ -49,14 +49,15 @@ async function fundWallet(wallet) {
   if (error) {
     return;
   }
+  console.log(`Fund ${wallet} wallet: ${hash}`);
   let confirmed = false;
   const maxWait = 1800;
   let wait = 0;
   while (confirmed == false && wait++ < maxWait) {
     await timer.setTimeout(10000);
-    const {e, tx} = await TxReceipt.of(hash);
-    if (e) continue;
-    if (tx.blockNumber != null) {
+    const {error, tx} = await TxReceipt.of(hash);
+    if (tx == null) continue;
+    if (tx.confirmNumber >= 1) {
       confirmed = true;
       const myToken = await Token.create(Token.MYTOKEN, walletBalances[wallet]);
       const result = await userWallet.transfer(wallet, process.env.ETH_COINBASE, myToken, SWEEP_GAS_PRICE);

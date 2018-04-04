@@ -4,6 +4,7 @@ const Token = require('../models/Token');
 const Promise = require('bluebird');
 const Transaction = require('../models/Transaction');
 const ERC20Contract = require('../models/ERC20Contract');
+const Nonce = require('../models/Nonce');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME + '_user_wallet_address_list';
 
@@ -13,6 +14,7 @@ exports.create = async () => {
   if (!exists) {
     await redis.hsetAsync(USER_WALLET_HASH, account.address, account.privateKey);
     await redis.rpushAsync(USER_WALLET_ADDRESS_LIST, account.address);
+    await Nonce.of(account.address).reset();
   }
   return account;
 };
