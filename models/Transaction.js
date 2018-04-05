@@ -4,20 +4,20 @@ const timer = require('../utils/Timer');
 const web3 = require('../utils/Web3');
 const Nonce = require('../models/Nonce');
 
-exports.createTransaction= (from, to, token, gasPrice) => {
+exports.createTransaction= (from, to, token, gasPrice, manageNonce) => {
     if (token.getType() == Token.ETH) {
-        return new EthTransaction(from, to, token, gasPrice);
+        return new EthTransaction(from, to, token, gasPrice, manageNonce);
     }
-    return new TokenTransaction(from, to, token, gasPrice);
+    return new TokenTransaction(from, to, token, gasPrice, manageNonce);
 };
 
 class Transaction {
-    constructor(from, to, token, gasPrice) {
+    constructor(from, to, token, gasPrice, manageNonce) {
         this.from = from;
         this.to = to;
         this.token = token;
         this.gasPrice = gasPrice;
-        this.nonce = Nonce.of(from);
+        this.manageNonce = manageNonce;
     }
 
     /**
@@ -25,7 +25,9 @@ class Transaction {
      */
     async getTxObj() {
         let tx = this.getTx();
-        tx.nonce = await this.getNonce();
+        if (this.manageNonce) {
+            tx.nonce = await this.getNonce();
+        }
         if (this.gasPrice > 0) {
             tx.gasPrice = this.gasPrice;
         }
@@ -33,7 +35,7 @@ class Transaction {
     }
 
     async getNonce() {
-        return await this.nonce.get();
+        return await Nonce.of(this.from).get();
     }
 
     getTx() {

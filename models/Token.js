@@ -45,6 +45,7 @@ exports.createFromAddress = async (address) => {
 };
 
 exports.addNewToken = async (type, address, decimal) => {
+  address = address.toLowerCase();
   if (await redis.hexistsAsync(TOKEN_META, type)) {
     return false;
   }
