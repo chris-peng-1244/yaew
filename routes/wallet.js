@@ -35,20 +35,23 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.post('/transfer', async (req, res, next) => {
+router.post('/withdraw', async (req, res, next) => {
   try {
     var token = await Token.create(req.body.tokenType, req.body.amount);
   } catch (e) {
     return next(boom.badRequest(e.message));
   }
 
-  const from = req.body.from;
-  const to = req.body.to;
+  const from = process.env.ETH_COINBASE;
+  const to = req.body.address.toLowerCase();
   const gasPrice = GasPrice.getGasPrice(req.body.gasPrice);
+  if (from == to) {
+    return next(boom.badRequest("Can't withdraw to the coinbase itself."));
+  }
 
   const { error, hash } = await UserWallet.transfer(from, to, token, gasPrice);
   if (error === UserWallet.INSUFFICIENT_TOKEN) {
-    return next(boom.badRequest("User wallet doesn't have enough token to transfer"));
+    return next(boom.badRequest("Coinbase doesn't have enough token to transfer"));
   } else if (error !== null) {
     return next(boom.badImplementation("Transfer failed: "+error));
   }

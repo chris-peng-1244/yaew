@@ -8,13 +8,11 @@ const Nonce = require('../models/Nonce');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME + '_user_wallet_address_list';
 
-exports.create = async () => {
+async function create() {
   const account = web3.eth.accounts.create(web3.utils.randomHex(32));
   await addAccount(account.address, account.privateKey);
   return account;
 };
-
-exports.addAccount = addAccount;
 
 async function addAccount(address, privateKey) {
   address = address.toLowerCase();
@@ -36,16 +34,14 @@ async function getAccountByAddress(address) {
   return web3.eth.accounts.privateKeyToAccount(privateKey);
 };
 
-exports.get = getAccountByAddress;
-
-exports.findAll = async (page, pageSize = 1000) => {
+async function findAll(page, pageSize = 1000) {
   if (page < 1) {
     return [];
   }
   return await redis.lrangeAsync(USER_WALLET_ADDRESS_LIST, (page - 1) * pageSize, (page) * pageSize);
 };
 
-exports.count = async () => {
+async function count() {
   return await redis.llenAsync(USER_WALLET_ADDRESS_LIST);
 };
 
@@ -54,7 +50,7 @@ exports.count = async () => {
  * @param string address 
  * @throws When the address is invalid or the network is lost.
  */
-exports.getBalance = async (address, token) => {
+async function getBalance(address, token) {
   if (token.getType() === Token.ETH) {
     const balanceInWei = await web3.eth.getBalance(address);
     return web3.utils.fromWei(balanceInWei, "ether");
@@ -75,11 +71,11 @@ async function getTokenBalance(address, token) {
  * @param {Token} token 
  * @param {int} gasPrice 
  */
-exports.transfer = async (from, to, token, gasPrice = 0, manageNonce = false) => {
+async function transfer(from, to, token, gasPrice = 0, manageNonce = false) {
   const {
     error,
     hash
-  } = await transfer(from, to, token, gasPrice, manageNonce);
+  } = await _transfer(from, to, token, gasPrice, manageNonce);
   if (error) {
     return {
       error: error,
@@ -112,11 +108,11 @@ exports.transfer = async (from, to, token, gasPrice = 0, manageNonce = false) =>
  * @param {Token} token 
  * @param {int} gasPrice 
  */
-exports.transferUntilConfirmed = async (from, to, token, gasPrice = 0, manageNonce = false) => {
+async function transferUntilConfirmed(from, to, token, gasPrice = 0, manageNonce = false) {
   const {
     error,
     hash
-  } = await transfer(from, to, token, gasPrice, manageNonce);
+  } = await _transfer(from, to, token, gasPrice, manageNonce);
   if (error) {
     return {
       error: error,
@@ -142,8 +138,16 @@ exports.transferUntilConfirmed = async (from, to, token, gasPrice = 0, manageNon
   });
 };
 
+async function isValidUserWallet(address) {
+  address = address.toLowerCase();
+  return !isCoinbase(address) && await redis.hexistsAsync(address);
+};
 
-async function transfer(from, to, token, gasPrice, manageNonce) {
+async function isCoinbase(address) {
+  return address.toLowerCase() === process.env.ETH_COINBASE;
+};
+
+async function _transfer(from, to, token, gasPrice, manageNonce) {
   let sender;
   try {
     sender = await getAccountByAddress(from);
@@ -170,3 +174,15 @@ async function transfer(from, to, token, gasPrice, manageNonce) {
     hash: web3.eth.sendSignedTransaction(signedTx.rawTransaction)
   };
 }
+
+module.exports = {
+  create: create,
+  addAccount: addAccount,
+  get: getAccountByAddress,
+  findAll: findAll,
+  getBalance: getBalance,
+  isCoinbase: isCoinbase,
+  isValidUserWallet: isValidUserWallet,
+  transfer: transfer,
+  transferUntilConfirmed: transferUntilConfirmed,
+};
