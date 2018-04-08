@@ -1,12 +1,13 @@
 const redis = require('../utils/Redis');
 const web3 = require('../utils/Web3');
 const Token = require('../models/Token');
-const Promise = require('bluebird');
+const Bluebird = require('bluebird');
 const Transaction = require('../models/Transaction');
 const ERC20Contract = require('../models/ERC20Contract');
 const Nonce = require('../models/Nonce');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
-const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME + '_user_wallet_address_list';
+const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME +
+  '_user_wallet_address_list';
 
 async function create() {
   const account = web3.eth.accounts.create(web3.utils.randomHex(32));
@@ -38,7 +39,10 @@ async function findAll(page, pageSize = 1000) {
   if (page < 1) {
     return [];
   }
-  return await redis.lrangeAsync(USER_WALLET_ADDRESS_LIST, (page - 1) * pageSize, (page) * pageSize);
+  const start = (page - 1) * pageSize;
+  const end = page * pageSize - 1;
+  console.log(`Start: ${start}, end: ${end}`);
+  return await redis.lrangeAsync(USER_WALLET_ADDRESS_LIST, start, end);
 };
 
 async function count() {
@@ -82,7 +86,7 @@ async function transfer(from, to, token, gasPrice = 0, manageNonce = false) {
       hash: null
     };
   }
-  return new Promise((resolve, reject) => {
+  return new Bluebird((resolve, reject) => {
     hash
       .on('transactionHash', hash => {
         resolve({
@@ -108,7 +112,8 @@ async function transfer(from, to, token, gasPrice = 0, manageNonce = false) {
  * @param {Token} token 
  * @param {int} gasPrice 
  */
-async function transferUntilConfirmed(from, to, token, gasPrice = 0, manageNonce = false) {
+async function transferUntilConfirmed(from, to, token, gasPrice = 0,
+  manageNonce = false) {
   const {
     error,
     hash
@@ -119,15 +124,15 @@ async function transferUntilConfirmed(from, to, token, gasPrice = 0, manageNonce
       hash: null
     };
   }
-  return new Promise((resolve, reject) => {
+  return new Bluebird((resolve, reject) => {
     hash
       .on('confirmation', (confirmationNumber, receipt) => {
         if (confirmationNumber >= 1) {
-        resolve({
-          error: null,
-          hash: receipt.transactionHash,
-        });
-      }
+          resolve({
+            error: null,
+            hash: receipt.transactionHash,
+          });
+        }
       })
       .on('error', error => {
         resolve({
@@ -140,7 +145,8 @@ async function transferUntilConfirmed(from, to, token, gasPrice = 0, manageNonce
 
 async function isValidUserWallet(address) {
   address = address.toLowerCase();
-  const isValidUserWallet = await redis.hexistsAsync(USER_WALLET_HASH, address);
+  const isValidUserWallet = await redis.hexistsAsync(USER_WALLET_HASH,
+    address);
   return !isCoinbase(address) && isValidUserWallet;
 };
 
@@ -160,7 +166,8 @@ async function _transfer(from, to, token, gasPrice, manageNonce) {
   }
 
   try {
-    const tx = Transaction.createTransaction(from, to, token, gasPrice, manageNonce);
+    const tx = Transaction.createTransaction(from, to, token, gasPrice,
+      manageNonce);
     var txObj = await tx.getTxObj();
   } catch (e) {
     return {
