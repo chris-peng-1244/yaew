@@ -41,7 +41,6 @@ async function findAll(page, pageSize = 1000) {
   }
   const start = (page - 1) * pageSize;
   const end = page * pageSize - 1;
-  console.log(`Start: ${start}, end: ${end}`);
   return await redis.lrangeAsync(USER_WALLET_ADDRESS_LIST, start, end);
 };
 
