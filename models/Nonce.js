@@ -13,7 +13,7 @@ class Nonce {
   }
 
   async get() {
-    const maxWait = 10;
+    const maxWait = 20;
     let wait = 0;
     let nonce = -1;
     while (wait++ < maxWait) {
@@ -24,13 +24,6 @@ class Nonce {
         continue;
       }
       nonce = await redis.incrAsync(NONCE + this.address);
-      const nonceOnEth = await web3.eth.getTransactionCount(this.address);
-      // If the nonce is less than the transactions mined on Ethereum,
-      // something is wrong, reset nonce value.
-      if (nonce < nonceOnEth) {
-        nonce = nonceOnEth;
-        await redis.setAsync(NONCE + this.address, nonce);
-      }
       // Unlock this address
       await redis.delAsync(NONCE_LOCK + this.address);
       break;

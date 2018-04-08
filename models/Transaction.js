@@ -48,7 +48,7 @@ class EthTransaction extends Transaction {
         return {
             to: this.to,
             value: this.token.getAmount(),
-            gas: 42000,
+            gas: 21000,
         };
     }
 }
@@ -59,7 +59,7 @@ class TokenTransaction extends Transaction {
             to: this.token.getAddress(),
             value: 0,
             data: this.getTokenTransactionData(this.to, this.token.getAmount()),
-            gas: 100000,
+            gas: 60000,
         };
     }
 

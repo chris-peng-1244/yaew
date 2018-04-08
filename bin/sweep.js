@@ -1,4 +1,5 @@
 require('dotenv').config();
+const colors = require('colors');
 const userWallet = require('../models/UserWallet');
 const TxReceipt = require('../models/TransactionReceipt');
 const Bluebird = require('bluebird');
@@ -17,11 +18,13 @@ userWallet.count()
   } 
 
   const token = await Token.create(Token.MYTOKEN);
-  const pageSize = 1000;
+  // const pageSize = 1000;
+  const pageSize = 2;
   const page = Math.ceil(count / pageSize);
   for (let i = 1; i <= page; i++) {
     await fundWallets(i, pageSize, token);
   }
+  console.log('Sweeping done'.cyan);
   redis.quit();
   process.exit(0);
 });
@@ -29,7 +32,7 @@ userWallet.count()
 async function fundWallets(page, pageSize, token)
 {
   const wallets = await userWallet.findAll(page, pageSize);
-  await Bluebird.filter(wallets, async wallet => {
+  const filterWallets = await Bluebird.filter(wallets, async wallet => {
     const balance = await userWallet.getBalance(wallet, token);
     const qualified = wallet != process.env.ETH_COINBASE.toLowerCase() && balance > 0;
     if (qualified) {
@@ -37,8 +40,9 @@ async function fundWallets(page, pageSize, token)
       walletBalances[wallet] = balance;
     }
     return qualified;
-  }).map(async wallet => {
-    return await fundWallet(wallet);
+  });
+  return await Bluebird.map(filterWallets, wallet => {
+    return fundWallet(wallet);
   });
 }
 
@@ -48,15 +52,21 @@ async function fundWallet(wallet) {
   console.log(`Funding ${wallet} wallet`);
   const { error, hash } = await userWallet.transferUntilConfirmed(process.env.ETH_COINBASE, wallet, token, SWEEP_GAS_PRICE, true);
   if (error) {
-    return;
+    console.error("Funding failed: " + error);
+    return false;
   }
   console.log(`Wallet ${wallet} funded with ${hash}`);
   const ethBalance = await userWallet.getBalance(wallet, token);
   if (ethBalance < fundValue) {
       console.error(`Wallet ${wallet} doesn't have enough ether`);
-      return;
+      return false;
   }
   const myToken = await Token.create(Token.MYTOKEN, walletBalances[wallet]);
   const result = await userWallet.transfer(wallet, process.env.ETH_COINBASE, myToken, SWEEP_GAS_PRICE);
+  if (result.error) {
+    console.error(result.error.message.red);
+    return false;
+  }
   console.log(`Swept ${wallet}: ${result.hash}`);
+  return true;
 }

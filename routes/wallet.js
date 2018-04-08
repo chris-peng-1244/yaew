@@ -45,11 +45,16 @@ router.post('/withdraw', async (req, res, next) => {
   const from = process.env.ETH_COINBASE;
   const to = req.body.address.toLowerCase();
   const gasPrice = GasPrice.getGasPrice(req.body.gasPrice);
+
   if (from == to) {
     return next(boom.badRequest("Can't withdraw to the coinbase itself."));
   }
+  if (req.app.get('env') != 'development' &&
+    await UserWallet.isValidUserWallet(to)) {
+    return next(boom.badRequest("Can only withdraw to outside address."));
+  }
 
-  const { error, hash } = await UserWallet.transfer(from, to, token, gasPrice);
+  const { error, hash } = await UserWallet.transfer(from, to, token, gasPrice, true);
   if (error === UserWallet.INSUFFICIENT_TOKEN) {
     return next(boom.badRequest("Coinbase doesn't have enough token to transfer"));
   } else if (error !== null) {

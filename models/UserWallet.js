@@ -140,10 +140,11 @@ async function transferUntilConfirmed(from, to, token, gasPrice = 0, manageNonce
 
 async function isValidUserWallet(address) {
   address = address.toLowerCase();
-  return !isCoinbase(address) && await redis.hexistsAsync(address);
+  const isValidUserWallet = await redis.hexistsAsync(USER_WALLET_HASH, address);
+  return !isCoinbase(address) && isValidUserWallet;
 };
 
-async function isCoinbase(address) {
+function isCoinbase(address) {
   return address.toLowerCase() === process.env.ETH_COINBASE;
 };
 
@@ -180,6 +181,7 @@ module.exports = {
   addAccount: addAccount,
   get: getAccountByAddress,
   findAll: findAll,
+  count: count,
   getBalance: getBalance,
   isCoinbase: isCoinbase,
   isValidUserWallet: isValidUserWallet,
