@@ -17,19 +17,45 @@ userWallet.count()
       return;
     }
 
-    const token = await Token.create(Token.MYTOKEN);
-    // const pageSize = 1000;
-    const pageSize = 2;
-    const page = Math.ceil(count / pageSize);
-    for (let i = 1; i <= page; i++) {
-      await fundWallets(i, pageSize, token);
-    }
+    const pageSize = 4;
+    await sweepTokens(count, pageSize);
+    await sweepEths(count, pageSize);
+    // // const pageSize = 1000;
+    // const page = Math.ceil(count / pageSize);
+    // for (let i = 1; i <= page; i++) {
+    //   await sweepTokens(i, pageSize, token);
+    //   await sweepEths(i, pageSize, token);
+    // }
     console.log('Sweeping done'.cyan);
     redis.quit();
     process.exit(0);
   });
 
-async function fundWallets(page, pageSize, token) {
+async function sweepTokens(count, pageSize) {
+  const token = await Token.create(Token.MYTOKEN);
+  const page = Math.ceil(count / pageSize);
+  for (let i = 1; i <= page; i++) {
+    await sweepToken(i, pageSize, token);
+  }
+}
+
+async function sweepEths(count, pageSize) {
+  const token = await Token.create(Token.MYTOKEN);
+  const page = Math.ceil(count / pageSize);
+  for (let i = 1; i <= page; i++) {
+    await sweepToken(i, pageSize, token);
+  }
+}
+
+async function sweep(count, pageSize, token) {
+  const page = Math.ceil(count / pageSize);
+  const sweeper = Sweeper.create(token);
+  for (let i = 1; i <= page; i++) {
+    await sweeper.sweepToken(i, pageSize, token);
+  }
+}
+
+async function sweepToken(page, pageSize, token) {
   const wallets = await userWallet.findAll(page, pageSize);
   const filterWallets = await Bluebird.filter(wallets, async wallet => {
     const balance = await userWallet.getBalance(wallet, token);
@@ -42,11 +68,11 @@ async function fundWallets(page, pageSize, token) {
     return qualified;
   });
   return await Bluebird.map(filterWallets, wallet => {
-    return fundWallet(wallet);
+    return sweepToken(wallet);
   });
 }
 
-async function fundWallet(wallet) {
+async function sweepToken(wallet) {
   const fundValue = gasPrice.getEthTransactionGasUsed(60000, process.env.SWEEP_GAS_PRICE);
   const token = await Token.create(Token.ETH, fundValue);
   console.log(`Funding ${wallet} wallet`);
