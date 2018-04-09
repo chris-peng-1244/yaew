@@ -3,6 +3,7 @@ const TOKEN_META = process.env.APP_NAME+'_token_metas';
 const TOKEN_ADDRESS_TO_TYPE = process.env.APP_NAME+'_token_address_to_type';
 const ETH = 1;
 const MYTOKEN = 2;
+const BigNumber = require('bignumber.js');
 
 const Token = async (type, amount) => {
   const t = parseInt(type);
@@ -11,14 +12,15 @@ const Token = async (type, amount) => {
     throw new Error(`Token ${t} is not supported`);
   }
   // Value should be string to avoid precision errors.
-  const value = amount*Math.pow(10, decimal) + '';
+  let value = new BigNumber(amount);
+  value = value.times(Math.pow(10, decimal));
 
   return Object.freeze({
     getType: () => {
       return t;
     },
     getAmount: () => {
-      return value;
+      return value.toNumber();
     },
     getAddress: () => {
       return address;

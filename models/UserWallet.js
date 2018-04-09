@@ -5,6 +5,7 @@ const Bluebird = require('bluebird');
 const Transaction = require('../models/Transaction');
 const ERC20Contract = require('../models/ERC20Contract');
 const Nonce = require('../models/Nonce');
+const BigNumber = require('bignumber.js');
 const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME +
   '_user_wallet_address_list';
@@ -52,6 +53,7 @@ async function count() {
  * 
  * @param string address 
  * @throws When the address is invalid or the network is lost.
+ * @return float
  */
 async function getBalance(address, token) {
   if (token.getType() === Token.ETH) {
@@ -63,8 +65,10 @@ async function getBalance(address, token) {
 
 async function getTokenBalance(address, token) {
   const contract = await ERC20Contract.at(token.getAddress());
-  const result = await contract.methods.balanceOf(address).call();
-  return parseInt(result) / Math.pow(10, token.getDecimal()) + '';
+  let result = await contract.methods.balanceOf(address).call();
+  result = new BigNumber(parseInt(result));
+  result = result.dividedBy(Math.pow(10, token.getDecimal()));
+  return result.toNumber();
 };
 
 /**
