@@ -12,7 +12,7 @@ userWallet.count()
       return;
     }
 
-    const pageSize = 4;
+    const pageSize = 5;
     const page = Math.ceil(count / pageSize);
     const tokenSweepers = [
       await TokenSweeper.create(Token.MYTOKEN),
