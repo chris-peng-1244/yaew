@@ -9,17 +9,18 @@ const _ = require('lodash');
 web3.eth.getBlockNumber()
   .then(async blockNumber => {
     await blockScanner.init();
-    let number = await blockScanner.getLastScannedBlockNumber(blockNumber) +
-      1;
+    let number = await blockScanner.getLastScannedBlockNumber(blockNumber);
     while (true) {
-      if (number > blockNumber) {
+      if (number >= blockNumber) {
         console.log('Waiting for new blocks...');
-        await timer.setTimeout(1000);
+        await timer.setTimeout(2000);
         blockNumber = await web3.eth.getBlockNumber();
         continue;
       }
 
-      const range = _.range(number, blockNumber + 1);
+      // Start from new block, so
+      // [number+1] to blockNumber
+      const range = _.range(number + 1, blockNumber + 1);
       const pageSize = 3;
       const page = Math.ceil(range.length / pageSize);
       for (let i = 0; i < page; i++) {
@@ -29,6 +30,7 @@ web3.eth.getBlockNumber()
         });
         await Bluebird.all(promises);
       }
+      number = blockNumber;
     }
   });
 

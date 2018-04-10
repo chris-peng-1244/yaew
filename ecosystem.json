@@ -14,6 +14,10 @@
         "middleware", "models", "routes", "node_modules",
         "utils", "app.js"
       ]
+    },
+    {
+      "name": "Watch-Ethereum",
+      "script": "bin/watch_blockchain.js"
     }
   ]
 }
