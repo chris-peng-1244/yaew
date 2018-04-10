@@ -1,24 +1,46 @@
 require('dotenv').config();
+require('colors');
 const web3 = require('../utils/Web3');
 const timer = require('../utils/Timer');
 const blockScanner = require('../models/BlockScanner');
+const Bluebird = require('bluebird');
+const _ = require('lodash');
 
 web3.eth.getBlockNumber()
-    .then(async blockNumber => {
-        await blockScanner.init();
-        let number = await blockScanner.getLastScannedBlockNumber(blockNumber) + 1;
-        while (true) {
-            while (number <= blockNumber) {
-                console.log(`Scanning block ${number}`);
-                try {
-                    await blockScanner.scan(number);
-                } catch (e) {
-                    console.error(e)
-                }
-                number++;
-            }
-            console.log('Waiting for new blocks...');
-            await timer.setTimeout(1000);
-            blockNumber = await web3.eth.getBlockNumber();
-        }
-    });
+  .then(async blockNumber => {
+    await blockScanner.init();
+    let number = await blockScanner.getLastScannedBlockNumber(blockNumber) +
+      1;
+    while (true) {
+      if (number > blockNumber) {
+        console.log('Waiting for new blocks...');
+        await timer.setTimeout(1000);
+        blockNumber = await web3.eth.getBlockNumber();
+        continue;
+      }
+
+      const range = _.range(number, blockNumber + 1);
+      const pageSize = 3;
+      const page = Math.ceil(range.length / pageSize);
+      for (let i = 0; i < page; i++) {
+        let promises = [];
+        range.slice(i * pageSize, (i + 1) * pageSize).forEach(number => {
+          promises.push(scan(number));
+        });
+        await Bluebird.all(promises);
+      }
+    }
+  });
+
+async function scan(number) {
+  console.log(`Scanning block ${number}`);
+  try {
+    const success = await blockScanner.scan(number);
+    if (success) console.log(`Block ${number} scanned`.green);
+    else console.log(
+      `Block ${number} cannot be scanned, added to failed queue`.red.bold
+    );
+  } catch (e) {
+    console.error(`Fatal: ` + e)
+  }
+}

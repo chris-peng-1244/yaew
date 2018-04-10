@@ -1,4 +1,4 @@
-export default class TokenTransaction {
+class TokenTransaction {
     constructor(tx, token) {
         this.getTransaction = () => { return tx; };
         this.getToken = () => { return token; };
@@ -20,3 +20,5 @@ export default class TokenTransaction {
         return this.getTransaction().hash;
     }
 }
+
+module.exports = TokenTransaction;

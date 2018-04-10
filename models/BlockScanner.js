@@ -7,6 +7,7 @@ const Token = require('../models/Token');
 
 const LAST_SCANNED_BLOCK_NUMBER = process.env.APP_NAME + '_last_scanned_block_number';
 const FAILED_TRANSACTION_KEY = process.env.APP_NAME + '_failed_scanning_tx_hashes';
+const FAILED_BLOCK_NUMBER = process.env.APP_NAME + '_failed_block_numbers';
 
 class BlockScanner {
     async init() {
@@ -27,9 +28,17 @@ class BlockScanner {
     }
 
     async scan(blockNumber) {
-        const block = await web3.eth.getBlock(blockNumber);
-        await scanTransactions(block.transactions, this.getCashiers());
-        await redis.setAsync(LAST_SCANNED_BLOCK_NUMBER, blockNumber);
+        try {
+            const block = await web3.eth.getBlock(blockNumber);
+            await scanTransactions(block.transactions, this.getCashiers());
+            return true;
+        } catch (e) {
+            console.error(`Can't get block ${blockNumber}` + e);
+            await redis.lpush(FAILED_BLOCK_NUMBER, blockNumber);
+            return false;
+        } finally {
+            await redis.setAsync(LAST_SCANNED_BLOCK_NUMBER, blockNumber);
+        }
     }
 }
 
@@ -51,11 +60,11 @@ async function scanTransactions(transactions, cashiers) {
 }
 
 async function scanTransaction(txHash, cashiers) {
-    let tx = null;
     try {
-        tx = await web3.eth.getTransaction(txHash);
+        var tx = await web3.eth.getTransaction(txHash);
     } catch (e) {
         console.error(`Can't find tx by its hash ${txHash}`);
+        return;
     }
     if (null === tx) {
         await redis.rpushAsync(FAILED_TRANSACTION_KEY, txHash);
@@ -65,19 +74,9 @@ async function scanTransaction(txHash, cashiers) {
         return;
     }
 
-    Promise.map(cashiers, async cashier => {
+    return Promise.map(cashiers, async cashier => {
         await cashier.audit(tx);
     });
-    // if (null === tx || !isTransactionOfInterest(tx)) return;
-    // console.log(`Find transaction ${tx.hash.red}`);
-    // const tokenTx = ATMTransaction(tx);
-    // if (!tokenTx.isValid()) {
-    //     return;
-    // }
-    // const foundBefore = await redisClient.sismemberAsync(WATCHED_TRANSACTION_KEY, tokenTx.hash());
-    // if (!foundBefore) {
-    //     await callRechargeCallback(tokenTx);
-    // }
 }
 
 module.exports = new BlockScanner();
