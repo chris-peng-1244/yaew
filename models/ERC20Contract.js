@@ -1,3 +1,6 @@
+/**
+ * The ABI of ERC20
+ */
 const web3 = require('../utils/Web3');
 
 const abi = [

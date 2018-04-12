@@ -10,6 +10,9 @@ const USER_WALLET_HASH = process.env.APP_NAME + '_user_wallets';
 const USER_WALLET_ADDRESS_LIST = process.env.APP_NAME +
   '_user_wallet_address_list';
 
+/**
+ * This module has the funcationality of create/find/transfer users' wallet
+ */
 async function create() {
   const account = web3.eth.accounts.create(web3.utils.randomHex(32));
   await addAccount(account.address, account.privateKey);

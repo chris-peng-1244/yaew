@@ -1,3 +1,6 @@
+/**
+ * This script sweeps the token/eth from users' wallet
+ */
 require('dotenv').config();
 const colors = require('colors');
 const userWallet = require('../models/UserWallet');
@@ -8,12 +11,14 @@ const TokenSweeper = require('../models/TokenSweeper');
 let walletBalances = {};
 userWallet.count()
   .then(async count => {
+    // Skip when there is no user
     if (count == 0) {
       return;
     }
 
     const pageSize = 5;
     const page = Math.ceil(count / pageSize);
+    // Initialize sweepers, one for the eth, one for the token
     const tokenSweepers = [
       await TokenSweeper.create(Token.MYTOKEN),
       TokenSweeper.create(Token.ETH)

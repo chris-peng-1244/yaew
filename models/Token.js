@@ -2,6 +2,7 @@ const redis = require('../utils/Redis');
 const TOKEN_META = process.env.APP_NAME+'_token_metas';
 const TOKEN_ADDRESS_TO_TYPE = process.env.APP_NAME+'_token_address_to_type';
 const ETH = 1;
+// TODO: Remove this ugly hard coded number
 const MYTOKEN = 2;
 const BigNumber = require('bignumber.js');
 

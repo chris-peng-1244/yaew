@@ -29,6 +29,10 @@ class Receipt {
   }
 }
 
+/**
+ * The role of cashier is to inspect into transaction and decide if this
+ * tranaction was sent to users' wallet.
+ */
 class Cashier {
 
   async audit(tx) {
@@ -40,6 +44,9 @@ class Cashier {
   }
 }
 
+/**
+ * Ethereum cashier
+ */
 class EthCashier extends Cashier {
 
   async audit(tx) {
@@ -57,6 +64,10 @@ class EthCashier extends Cashier {
     return false;
   }
 
+  /**
+   * Change this method, notifiy your backend server that user has deposited. 
+   * @param {Receipt} receipt 
+   */
   async _callback(receipt) {
     console.log(
       `Callback to xxx of transaction ${receipt.getHash()}: ${receipt.getValue()} ETH --->${receipt.getToAddress()}`
@@ -65,6 +76,9 @@ class EthCashier extends Cashier {
   }
 }
 
+/**
+ * Token Cashier
+ */
 class TokenCashier extends Cashier {
   constructor(token) {
     super();
@@ -92,6 +106,10 @@ class TokenCashier extends Cashier {
     return false;
   }
 
+  /**
+   * Change this method, notifiy your backend server that user has deposited. 
+   * @param {Receipt} receipt 
+   */
   async _callback(receipt) {
     console.log(
       `Callback to xxx of transaction ${receipt.getHash()}: ${receipt.getValue()} TOKEN --->${receipt.getToAddress()}`

@@ -6,6 +6,9 @@ const redis = require('../utils/Redis');
 const web3 = require('../utils/Web3');
 const SWEEP_GAS_PRICE = gasPrice.getGasPrice(process.env.SWEEP_GAS_PRICE);
 
+/**
+ * Sweeper collects eth/token from users' wallet
+ */
 class Sweeper {
   constructor(token) {
     this.getToken = () => {

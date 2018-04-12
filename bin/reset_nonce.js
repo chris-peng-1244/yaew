@@ -1,3 +1,6 @@
+/**
+ * Use this script should you mess up the nonce of coinbase.
+ */
 require('dotenv').config();
 const Nonce = require('../models/Nonce');
 if(process.argv.length != 3) {

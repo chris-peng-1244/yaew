@@ -1,3 +1,7 @@
+/**
+ * Token transaction is sent to the token contract, the useful information
+ * is hidden inside the input filed.
+ */
 class TokenTransaction {
     constructor(tx, token) {
         this.getTransaction = () => { return tx; };

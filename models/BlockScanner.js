@@ -9,6 +9,10 @@ const LAST_SCANNED_BLOCK_NUMBER = process.env.APP_NAME + '_last_scanned_block_nu
 const FAILED_TRANSACTION_KEY = process.env.APP_NAME + '_failed_scanning_tx_hashes';
 const FAILED_BLOCK_NUMBER = process.env.APP_NAME + '_failed_block_numbers';
 
+/**
+ * Scan the {blockNumber}, tranverse through all the transactions
+ * in the block, find out if there are ones sent the users' wallet
+ */
 class BlockScanner {
     async init() {
         const cashiers = [
@@ -21,7 +25,7 @@ class BlockScanner {
     async getLastScannedBlockNumber(baseNumber) {
         let lastNumber = await redis.getAsync(LAST_SCANNED_BLOCK_NUMBER);
         if (null === lastNumber) {
-            lastNumber = baseNumber > 1000 ? baseNumber - 1000 : -1;  
+            lastNumber = baseNumber > 100 ? baseNumber - 100 : -1;  
             await redis.setAsync(LAST_SCANNED_BLOCK_NUMBER, lastNumber);
         }
         return parseInt(lastNumber);

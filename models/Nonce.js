@@ -7,6 +7,13 @@ exports.of = address => {
   return new Nonce(address);
 };
 
+/**
+ * Nonce is used when you try to send a transaction.
+ * Your nonce should increase one by one, and there can be no holes in them.
+ * But if you try to send two transactions at the same time, the system cannot
+ * determine their nonce automatically, therefore, I store the last nonce in redis,
+ * and add it everytime a transaction is issued.
+ */
 class Nonce {
   constructor(address) {
     this.address = address.toLowerCase();

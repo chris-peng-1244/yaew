@@ -6,6 +6,7 @@ const blockScanner = require('../models/BlockScanner');
 const Bluebird = require('bluebird');
 const _ = require('lodash');
 
+// TODO: should record the scanned transactions in case that they are repeatedly scanned
 web3.eth.getBlockNumber()
   .then(async blockNumber => {
     await blockScanner.init();

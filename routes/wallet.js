@@ -23,6 +23,7 @@ router.get('/:address/:tokenType', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const account = await UserWallet.create();
+    // TODO: only return public address
     return res.json({
       code: 0,
       data: {

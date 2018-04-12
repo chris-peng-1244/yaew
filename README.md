@@ -1,6 +1,12 @@
 # yaew
 Yet Another Ethereum Wallet
 
+## Requirement
+- Nodejs 8.11.0
+- Redis
+- yarn
+- pm2
+
 ## How to install
 
 ### 1. Install the npm dependencies
@@ -31,13 +37,18 @@ $ node bin/set_coinbase.js address privatekey
 
 ### 5. Tell the system what token you want to support
 ```
-$ node bin/add_token.js type_id[an integer] token_address token_decimal
+$ node bin/add_token.js token_address token_decimal
 ```
 
 ### 6. Start the app with pm2
+Install pm2 if you haven't got it already.
 ```
 $ pm2 start ecosystem.json
-
+```
+Or start it manually:
+```
+$ node bin/www
+$ node bin/watch_blockchain.js
 ```
 
 ## Cavaet
