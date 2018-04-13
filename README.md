@@ -24,7 +24,7 @@ $ cp .env.example .env
 * JWT_SECRET Used to encrypt jwt token
 * API_USERNAME How others login into this system
 * API_PASSWORD The password of the user above, this password is hashed, use bin/generate_password.js to create one.
-* ETH_PROVIDER The Eth http provider you prefer
+* ETH_PROVIDER The Eth http provider you prefer, I've tested INFURA and testrpc
 * ETH_COINBASE The "main" account you use to sweep/send eths and tokens
 * MAX_GAS_PRICE In gwei
 * SWEEP_GAS_PRICE How much do you want to pay for the gas when sweeping
