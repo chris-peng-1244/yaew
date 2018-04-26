@@ -1,4 +1,4 @@
-const web3 = require('../utils/web3');
+const web3 = require('../utils/Web3');
 
 exports.getGasPrice = (price) => {
   if (price === null || price === undefined || isNaN(price)) {
