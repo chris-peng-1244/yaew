@@ -39,8 +39,8 @@ app.use(bodyParser.json()); // application/json
 app.use(bodyParser.urlencoded({ extended: true })); // application/x-www-form-urlencoded
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(auth);
 app.use('/users', usersRouter);
+app.use(auth);
 app.use('/wallets', walletRouter);
 app.use('/transactions', transactionRouter);
 
