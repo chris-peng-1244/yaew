@@ -62,8 +62,8 @@ class TokenSweeper extends Sweeper {
     // Sweep the tokens
     const tokenToBeTransfered = await Token.create(Token.MYTOKEN, this._walletBalances[
       wallet]);
-    const result = await userWallet.transfer(wallet, process.env.ETH_COINBASE,
-      tokenToBeTransfered, SWEEP_GAS_PRICE, true);
+    const result = await userWallet.transferUntilConfirmed(wallet, process.env.ETH_COINBASE,
+      tokenToBeTransfered, SWEEP_GAS_PRICE);
     if (result.error) {
       console.error(result.error.message.red);
       return false;
@@ -101,8 +101,8 @@ class EthSweeper extends Sweeper {
     const tokenToBeTransfered = await Token.create(Token.ETH, this._walletBalances[
       wallet]);
     console.log(`Sweeping ${wallet}`);
-    const result = await userWallet.transfer(wallet, process.env.ETH_COINBASE,
-      tokenToBeTransfered, SWEEP_GAS_PRICE, true);
+    const result = await userWallet.transferUntilConfirmed(wallet, process.env.ETH_COINBASE,
+      tokenToBeTransfered, SWEEP_GAS_PRICE);
     if (result.error) {
       console.error(result.error.message.red);
       return false;

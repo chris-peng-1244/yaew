@@ -15,7 +15,9 @@ web3.eth.getBlockNumber()
       if (number >= blockNumber) {
         console.log('Waiting for new blocks...');
         await timer.setTimeout(2000);
-        blockNumber = await web3.eth.getBlockNumber();
+        try {
+          blockNumber = await web3.eth.getBlockNumber();
+        } catch (e) { console.error(e); }
         continue;
       }
 
